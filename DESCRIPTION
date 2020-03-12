@@ -1,0 +1,11 @@
+Package: stager
+Title: Bird migration staging modeling
+Description: R package to calculate variables in bird staging in migration.
+Version: 0.1.0
+Author: Wolfson Liu <wolfsonliu@live.com>
+Maintainer: Wolfson Liu <wolfsonliu@live.com>
+License: GPL-3
+URL: https://github.com/wolfsonliu/stager
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
