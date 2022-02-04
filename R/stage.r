@@ -7,13 +7,16 @@
 ##'     using normal distributions of immigration and emigration.
 ##'
 ##' @param day int, the day from the start of migration.
-##' @param population int, the total number of all the migrated birds.
+##' @param population int, the total number of all the birds,
+##'     including migrants and residents.
 ##' @param immigrate.mean numeric, the mean day of immigration.
 ##' @param immigrate.sd numeric, the standard diviation of immigration
 ##'     days.
 ##' @param emigrate.mean numeric, the mean day of emigration.
 ##' @param emigrate.sd numeric, the standard diviation of emigration
 ##'     days.
+##' @param resident numeric, the number of
+##'     resident birds.
 ##'
 ##' @return \code{stage.number(day, population, immigrate.mean,
 ##'     immigrate.sd, emigrate.mean, emigrate.sd)} returns the number
@@ -29,18 +32,28 @@
 ##' @export
 stage.number <- function(day,
                          population,
+                         resident,
                          immigrate.mean,
                          immigrate.sd,
                          emigrate.mean,
                          emigrate.sd) {
+    migrant <- population - resident
     migrate.number(
         day=day,
-        population=population,
+        population=migrant,
         migrate.mean=immigrate.mean,
         migrate.sd=immigrate.sd
-    ) - migrate.number(
+    ) -
+        migrate.number(
             day=day,
-            population=population,
+            population=migrant,
+            migrate.mean=emigrate.mean,
+            migrate.sd=emigrate.sd
+        ) +
+        resident -
+        migrate.number(
+            day=day,
+            population=resident,
             migrate.mean=emigrate.mean,
             migrate.sd=emigrate.sd
         )

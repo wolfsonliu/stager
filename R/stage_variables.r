@@ -1,8 +1,5 @@
 ## -*- coding: utf-8 -*-
 ##' @name factory.stage.variables
-##' @aliases calculate.stage.variables
-##'
-##' @rdname stage.variables
 ##'
 ##' @title Calculating of stage variables using \code{optim()}
 ##'
@@ -15,16 +12,18 @@
 ##'     order.
 ##' @param daycount int vector, counts of birds observed for each day,
 ##'     should be coordinated with day vector.
-##' @param population int or not set for prediction, the total number
-##'     of all the migrated birds.
-##' @param immigrate.mean numeric or not set for prediction, the mean
+##' @param population int or unset for prediction, the total number of
+##'     all the birds, including migrants and residents.
+##' @param immigrate.mean numeric or unset for prediction, the mean
 ##'     day of immigration.
-##' @param immigrate.sd numeric or not set for prediction, the
-##'     standard diviation of immigration days.
-##' @param emigrate.mean numeric or not set for prediction, the mean
-##'     day of emigration.
-##' @param emigrate.sd numeric or not set for prediciton, the standard
+##' @param immigrate.sd numeric or unset for prediction, the standard
+##'     diviation of immigration days.
+##' @param emigrate.mean numeric or unset for prediction, the mean day
+##'     of emigration.
+##' @param emigrate.sd numeric or unset for prediciton, the standard
 ##'     diviation of emigration days.
+##' @param resident numeric or unset for prediction, the number of
+##'     resident birds.
 ##'
 ##' @return \code{factory.stage.variables(day, daycount, population,
 ##'     immigrate.mean, immigrate.sd, emigrate.mean, emigrate.sd)}
@@ -37,8 +36,9 @@
 ##'     parameters should be calculated with \code{optim()} function,
 ##'     with min and max range provided.
 ##'
-##' @seealso [optim()] for calculation using the output function of
-##'     \code{factory.stage.variables}.
+##' @seealso \code{optim()} for calculation using the output function of
+##'     \code{factory.stage.variables()}, \code{calculate.stage.variables()}
+##'     for easier calculation of stage variables.
 ##'
 ##' @examples
 ##' data <- data.frame(
@@ -71,10 +71,12 @@
 factory.stage.variables <- function(day,
                                     daycount,
                                     population,
+                                    resident,
                                     immigrate.mean,
-                                    emigrate.mean,
                                     immigrate.sd,
-                                    emigrate.sd) {
+                                    emigrate.mean,
+                                    emigrate.sd)
+{
     known.variables <- as.list(match.call())[-1]
     optimize.func <- function(vars) {
         variables <- c(
@@ -89,7 +91,9 @@ factory.stage.variables <- function(day,
     optimize.func
 }
 ##'
-##' @rdname stage.variables
+##' @name calculate.stage.variables
+##'
+##' @title Calculating the stage variables
 ##'
 ##' @description A wrapper function of \code{optim()} for the easier
 ##'     calculation of stage variables using the output function from
@@ -100,7 +104,8 @@ factory.stage.variables <- function(day,
 ##' @param daycount int vector, counts of birds observed for each day,
 ##'     should be coordinated with day vector.
 ##' @param population int or range vector of \code{c(min, max)} for
-##'     prediction, the total number of all the migrated birds.
+##'     prediction, the total number of all the birds, including
+##'     migrants and residents.
 ##' @param immigrate.mean numeric or range vector of \code{c(min,
 ##'     max)} for prediction, the mean day of immigration.
 ##' @param immigrate.sd numeric or range vector of \code{c(min, max)}
@@ -109,11 +114,17 @@ factory.stage.variables <- function(day,
 ##'     for prediction, the mean day of emigration.
 ##' @param emigrate.sd numeric or range vector of \code{c(min, max)}
 ##'     for prediciton, the standard diviation of emigration days.
+##' @param resident numeric or range vector of \code{c(min, max)} for
+##'     prediction, the number of resident birds.
 ##'
 ##' @return \code{calculate.stage.variables(day, daycount, population,
 ##'     immigrate.mean, immigrate.sd, emigrate.mean, emigrate.sd)}
 ##'     returns a list of output of calculated variables for the stage
 ##'     of the data inputed.
+##'
+##' @seealso \code{factory.stage.variables()} for a lower level function to calculate,
+##'     \code{optim()} for calculation using the output function of
+##'     \code{factory.stage.variables()}.
 ##'
 ##' @examples
 ##' data <- data.frame(
@@ -125,6 +136,7 @@ factory.stage.variables <- function(day,
 ##'     day=data$day,
 ##'     daycount=data$daycount,
 ##'     population=85,
+##'     resident = 0,
 ##'     immigrate.mean=c(10, 20),
 ##'     emigrate.mean=c(20, 50),
 ##'     immigrate.sd=c(4, 10),
@@ -135,11 +147,12 @@ factory.stage.variables <- function(day,
 calculate.stage.variables <- function(day,
                                       daycount,
                                       population,
+                                      resident,
                                       immigrate.mean,
-                                      emigrate.mean,
                                       immigrate.sd,
-                                      emigrate.sd) {
-
+                                      emigrate.mean,
+                                      emigrate.sd)
+{
     all.variables <- lapply(
         as.list(match.call())[-1],
         eval
@@ -151,8 +164,9 @@ calculate.stage.variables <- function(day,
     predict.variables$lower <- list()
     predict.variables$upper <- list()
     for (x in c('population',
-                'immigrate.mean', 'emigrate.mean',
-                'immigrate.sd', 'emigrate.sd')) {
+                'immigrate.mean', 'immigrate.sd',
+                'emigrate.mean', 'emigrate.sd',
+                'resident')) {
         if (length(all.variables[[x]]) == 1) {
             known.variables[[x]] <- all.variables[[x]]
         } else if (length(all.variables[[x]]) == 2) {
@@ -176,6 +190,12 @@ calculate.stage.variables <- function(day,
     }
     for (x in names(result$par)) {
         output.list[[x]] <- result$par[x]
+        if (x == 'population') {
+            output.list[['population CI(0.95)']] <- qchisq(
+                c(0.025, 0.975),
+                df = result$par[['population']] * 2
+            ) / 2
+        }
     }
     output.list[['mse']] <- result$value
     class(output.list) <- c('stage', 'list')

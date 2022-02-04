@@ -38,27 +38,34 @@
 ##'
 ##' @importFrom graphics legend lines plot
 ##' @export
-plot.stage <- function(x, ...) {
+plot.stage <- function(x, ...)
+{
+    oldmar <- par('mar')
+    par(mar=c(5.1, 4.1, 6.1, 2.1))
     plot(
         x=x$day, y=x$daycount,
         type='p', pch=19, col='red',
         xlim=c(min(x$day), max(x$day)),
-        ylim=c(0, x$population * 1.05),
+        ylim=c(0, x$population * 1.1),
         xlab='Day',
         ylab='Bird count',
         main=paste0(
-            paste('Population:', x$population),
+            paste(
+                'Population:', x$population,
+                'Resident:', x$resident,
+                sep=' '
+            ),
             '\n',
             paste(
                 'Immigration mean:', round(x$immigrate.mean),
                 'Immigration sd:', round(x$immigrate.sd, 2),
-                sep=', '
+                sep=' '
             ),
             '\n',
             paste(
                 'Emigration mean:', round(x$emigrate.mean),
                 'Emigration sd:', round(x$emigrate.sd, 2),
-                sep=', '
+                sep=' '
             )
         ), ...
     )
@@ -68,10 +75,11 @@ plot.stage <- function(x, ...) {
         stage.number(
             seq(min(x$day), max(x$day)),
             population=x$population,
-            immigrate.mean = x$immigrate.mean,
-            emigrate.mean = x$emigrate.mean,
-            immigrate.sd = x$immigrate.sd,
-            emigrate.sd = x$emigrate.sd
+            resident=x$resident,
+            immigrate.mean=x$immigrate.mean,
+            immigrate.sd=x$immigrate.sd,
+            emigrate.mean=x$emigrate.mean,
+            emigrate.sd=x$emigrate.sd
         ),
         type='l', lty=1, ...
     )
@@ -80,12 +88,12 @@ plot.stage <- function(x, ...) {
         x=seq(min(x$day), max(x$day)),
         y=migrate.number(
             seq(min(x$day), max(x$day)),
-            x$population,
+            x$population - x$resident,
             x$immigrate.mean,
             x$immigrate.sd
         ) - migrate.number(
                 seq(min(x$day), max(x$day)) - 1,
-                x$population,
+                x$population - x$resident,
                 x$immigrate.mean,
                 x$immigrate.sd
             ),
@@ -96,22 +104,33 @@ plot.stage <- function(x, ...) {
         x=seq(min(x$day), max(x$day)),
         y=migrate.number(
             seq(min(x$day), max(x$day)),
-            x$population,
+            x$population - x$resident,
             x$emigrate.mean,
             x$emigrate.sd
         ) - migrate.number(
                 seq(min(x$day), max(x$day)) - 1,
-                x$population,
+                x$population - x$resident,
                 x$emigrate.mean,
                 x$emigrate.sd
             ),
         lty=3, ...
     )
 
-    legend(
-        'top',
-        legend=c('Stage', 'Immigration', 'Emigration'),
-        lty=c(1, 2, 3), ncol=3
+    lines(
+        x=seq(min(x$day), max(x$day)),
+        y=x$resident - migrate.number(
+                           seq(min(x$day), max(x$day)) - 1,
+                           x$resident,
+                           x$emigrate.mean,
+                           x$emigrate.sd
+                       ),
+        lty=3, ...
     )
 
+    legend(
+        'top',
+        legend=c('Stage', 'Immigration', 'Emigration', 'Resident'),
+        lty=c(1, 2, 3, 4), ncol=4
+    )
+    par(mar=oldmar)
 }

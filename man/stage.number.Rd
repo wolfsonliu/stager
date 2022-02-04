@@ -7,6 +7,7 @@
 stage.number(
   day,
   population,
+  resident,
   immigrate.mean,
   immigrate.sd,
   emigrate.mean,
@@ -16,7 +17,11 @@ stage.number(
 \arguments{
 \item{day}{int, the day from the start of migration.}
 
-\item{population}{int, the total number of all the migrated birds.}
+\item{population}{int, the total number of all the birds,
+including migrants and residents.}
+
+\item{resident}{numeric, the number of
+resident birds.}
 
 \item{immigrate.mean}{numeric, the mean day of immigration.}
 
